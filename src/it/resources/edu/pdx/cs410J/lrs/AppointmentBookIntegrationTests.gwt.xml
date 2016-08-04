@@ -8,7 +8,7 @@
 
   -->
 
-  <inherits name='edu.pdx.cs410J.whitlock.AppointmentBookGwt'/>
+  <inherits name='edu.pdx.cs410J.lrs.AppointmentBookGwt'/>
 
   <source path="client">
     <include name="**/*.java"/>
@@ -22,6 +22,6 @@
   </source>
 
   <!-- Need to define the servlet in .gwt.xml in order to use service in a GwtTest -->
-  <servlet path="/appointments" class="edu.pdx.cs410J.whitlock.server.AppointmentBookServiceImpl"/>
+  <servlet path="/appointments" class="edu.pdx.cs410J.lrs.server.AppointmentBookServiceImpl"/>
 
 </module>

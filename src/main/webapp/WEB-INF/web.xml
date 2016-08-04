@@ -7,7 +7,7 @@
   <!-- Servlets -->
   <servlet>
     <servlet-name>appointmentsServlet</servlet-name>
-    <servlet-class>edu.pdx.cs410J.whitlock.server.AppointmentBookServiceImpl</servlet-class>
+    <servlet-class>edu.pdx.cs410J.lrs.server.AppointmentBookServiceImpl</servlet-class>
   </servlet>
 
   <servlet-mapping>

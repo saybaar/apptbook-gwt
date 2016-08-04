@@ -1,7 +1,9 @@
-package edu.pdx.cs410J.whitlock.client;
+package edu.pdx.cs410J.lrs.client;
 
 import com.google.gwt.user.client.rpc.RemoteService;
 import com.google.gwt.user.client.rpc.RemoteServiceRelativePath;
+
+import java.util.Date;
 
 /**
  * A GWT remote service that returns a dummy appointment book
@@ -11,8 +13,13 @@ public interface AppointmentBookService extends RemoteService {
 
   /**
    * Returns the current date and time on the server
-   * @param numberOfAppointments
+   * @param owner
    */
-  public AppointmentBook createAppointmentBook(int numberOfAppointments);
+  public AppointmentBook createAppointmentBook(String owner);
+
+  public AppointmentBook getAppointmentBook(String owner);
+
+  //returns the updated apptbook
+  public AppointmentBook addAppointment(String owner, String description, Date beginTime, Date endTime);
 
 }

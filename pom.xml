@@ -6,7 +6,7 @@
     <version>Summer2016</version>
   </parent>
   <modelVersion>4.0.0</modelVersion>
-  <groupId>edu.pdx.cs410J.whitlock</groupId>
+  <groupId>edu.pdx.cs410J.lrs</groupId>
   <artifactId>apptbook-gwt</artifactId>
   <packaging>war</packaging>
   <version>1.0-SNAPSHOT</version>
@@ -79,7 +79,7 @@
             <configuration>
                 <runTarget>AppointmentBookGwt.html</runTarget>
                 <modules>
-                  <module>edu.pdx.cs410J.whitlock.AppointmentBookGwt</module>
+                  <module>edu.pdx.cs410J.lrs.AppointmentBookGwt</module>
                 </modules>
                 <extraJvmArgs>-Xmx512m</extraJvmArgs>
                 <style>DETAILED</style>

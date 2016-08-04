@@ -1,4 +1,4 @@
-package edu.pdx.cs410J.whitlock.client;
+package edu.pdx.cs410J.lrs.client;
 
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.NativeEvent;
@@ -6,7 +6,11 @@ import com.google.gwt.event.dom.client.DomEvent;
 import com.google.gwt.junit.client.GWTTestCase;
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.ui.Button;
+import org.junit.Ignore;
 import org.junit.Test;
+
+import java.util.Date;
+
 
 /**
  * An integration test for the airline GWT UI.  Remember that GWTTestCase is JUnit 3 style.
@@ -16,16 +20,36 @@ import org.junit.Test;
 public class AppointmentBookGwtIT extends GWTTestCase {
   @Override
   public String getModuleName() {
-    return "edu.pdx.cs410J.whitlock.AppointmentBookIntegrationTests";
+    return "edu.pdx.cs410J.lrs.AppointmentBookIntegrationTests";
   }
 
+  @Test
+  public void testDateParserTest() {
+    String timeString = "11/11/1111 11:11 AM";
+    Date timeDate = null;
+    try {
+      timeDate = ApptBookUtilities.parseDateTime(timeString);
+    } catch (IllegalArgumentException e) {
+      fail();
+    }
+    assertEquals(ApptBookUtilities.dumpDateTime(timeDate), (timeString));
+    try {
+      assertEquals(ApptBookUtilities.parseDateTime(ApptBookUtilities.dumpDateTime(timeDate)), (timeDate));
+      assertEquals(ApptBookUtilities.dumpDateTime(ApptBookUtilities.parseDateTime(timeString)), (timeString));
+    } catch (IllegalArgumentException e) {
+      fail();
+    }
+  }
+/*
+  //no longer valid
+  @Ignore
   @Test
   public void testClickingButtonAlertsWithAppointmentInformation() {
     final CapturingAlerter alerter = new CapturingAlerter();
 
     AppointmentBookGwt ui = new AppointmentBookGwt(alerter);
-    ui.textBox.setText("4");
-    click(ui.button);
+    ui.ownerField.setText("4");
+    click(ui.addButton);
 
     Timer verify = new Timer() {
       @Override
@@ -42,15 +66,16 @@ public class AppointmentBookGwtIT extends GWTTestCase {
 
     delayTestFinish(1000);
   }
+  */
 
   /**
    * Clicks a <code>Button</code>
    *
-   * One would think that you could testing clicking a button with Button.click(), but it looks
+   * One would think that you could testing clicking a addButton with Button.click(), but it looks
    * like you need to fire the native event instead.  Lame.
    *
    * @param button
-   *        The button to click
+   *        The addButton to click
    */
   private void click(Button button) {
     NativeEvent event = Document.get().createClickEvent(0, 0, 0, 0, 0, false, false, false, false);
