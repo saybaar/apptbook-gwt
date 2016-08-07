@@ -46,4 +46,16 @@ public class AppointmentBookServiceImplTest {
     assertThat(service.getAppointmentBook("testOwner2").getAppointments().size(), equalTo(1));
   }
 
+  @Test
+  public void searchTest(){
+    AppointmentBookServiceImpl service = new AppointmentBookServiceImpl();
+    Date date1 = new Date(1321038660000L); //11/11/2011 11:11 AM
+    Date date2 = new Date(1321039260000L); //11/11/2011 11:21 AM
+    Date date3 = new Date(1321039860000L); //11/11/2011 11:21 AM
+    service.addAppointment("testOwner1", "testDescription1", date1, date2);
+    service.addAppointment("testOwner1", "testDescription2", date2, date3);
+    AppointmentBook results = service.searchForAppointments("testOwner1", date1, date2);
+    assertThat(results.getAppointments().size(), equalTo(1));
+  }
+
 }

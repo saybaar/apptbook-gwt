@@ -40,6 +40,30 @@ public class AppointmentBookServiceImpl extends RemoteServiceServlet implements 
   }
 
   @Override
+  public AppointmentBook searchForAppointments(String owner, Date beginTime, Date endTime) {
+    AppointmentBook searchInBook = appointmentBookLibrary.get(owner);
+    AppointmentBook results = new AppointmentBook("Appointments for " + owner + " between " +
+      beginTime + " and " + endTime);
+    for(Appointment appt : searchInBook.getAppointments()) {
+      if(appt.getBeginTime().compareTo(beginTime) >= 0 &&
+              appt.getEndTime().compareTo(endTime) <= 0) {
+        results.addAppointment(appt);
+      }
+    }
+    return results;
+  }
+
+  public AppointmentBook deleteAppointment(String owner, int uid){
+    AppointmentBook apptBook = appointmentBookLibrary.get(owner);
+    for(Appointment appt : apptBook.getAppointments()) {
+      if(appt.getUid() == uid) {
+        apptBook.getAppointments().remove(appt);
+      }
+    }
+    return apptBook;
+  }
+
+  @Override
   protected void doUnexpectedFailure(Throwable unhandled) {
     unhandled.printStackTrace(System.err);
     super.doUnexpectedFailure(unhandled);

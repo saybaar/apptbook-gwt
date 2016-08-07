@@ -3,6 +3,8 @@ package edu.pdx.cs410J.lrs.client;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.gwt.core.client.EntryPoint;
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.event.dom.client.ChangeEvent;
+import com.google.gwt.event.dom.client.ChangeHandler;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.user.client.Window;
@@ -18,15 +20,26 @@ import java.util.Date;
 public class AppointmentBookGwt implements EntryPoint {
   private final Alerter alerter;
 
+  private AppointmentBook currentBook = null;
+
   @VisibleForTesting
-  Button addButton;
-  TextBox ownerField;
   TextBox descriptionField;
   TextBox beginDateField;
   TextBox endDateField;
+  Button addButton;
 
-  Button deleteButton;
+  TextBox searchBeginField;
+  TextBox searchEndField;
+  Button searchButton;
+
+  ListBox bookSelector;
+  Label listLabel;
   FlexTable apptList;
+
+  Button newBookButton;
+  TextBox ownerField;
+
+  DockPanel masterPanel;
 
   public AppointmentBookGwt() {
     this(new Alerter() {
@@ -45,7 +58,16 @@ public class AppointmentBookGwt implements EntryPoint {
   }
 
   private void addWidgets() {
-    addButton = new Button("Add Appointments");
+
+    this.ownerField = new TextBox();
+    ownerField.setText("Owner");
+    this.descriptionField = new TextBox();
+    descriptionField.setText("Description");
+    this.beginDateField = new TextBox();
+    beginDateField.setText("11/11/1111 11:11 AM");
+    this.endDateField = new TextBox();
+    endDateField.setText("11/11/1111 11:21 AM");
+    addButton = new Button("Add Appointment");
     addButton.addClickHandler(new ClickHandler() {
       @Override
       public void onClick(ClickEvent clickEvent) {
@@ -53,46 +75,97 @@ public class AppointmentBookGwt implements EntryPoint {
       }
     });
 
-    this.ownerField = new TextBox();
-    ownerField.setText("Owner");
-    this.descriptionField = new TextBox();
-    descriptionField.setText("Description");
-    this.beginDateField = new TextBox();
-    beginDateField.setText("Begin date/time");
-    this.endDateField = new TextBox();
-    endDateField.setText("End date/time");
+    this.searchBeginField = new TextBox();
+    this.searchEndField = new TextBox();
+    searchButton = new Button("Search");
+    searchButton.addClickHandler(new ClickHandler() {
+      @Override
+      public void onClick(ClickEvent clickEvent) {
+        searchForAppointments();
+      }
+    });
+
+    this.listLabel = new Label();
+    listLabel.setText("Select or create an appointment book to view");
+
+    this.bookSelector = new ListBox();
+    bookSelector.addChangeHandler(new ChangeHandler() {
+      @Override
+      public void onChange(ChangeEvent changeEvent) {
+        changeActiveApptBook(bookSelector.getSelectedItemText());
+      }
+    });
+
+    this.newBookButton = new Button("New book");
+    newBookButton.addClickHandler(new ClickHandler() {
+      @Override
+      public void onClick(ClickEvent clickEvent) {
+        createBook();
+      }
+    });
 
     this.apptList = new FlexTable();
-    apptList.insertRow(0);
-    apptList.insertCell(0, 0);
-    apptList.setHTML(0, 0, "Hello world!");
+    apptList.setBorderWidth(1);
+    apptList.setCellPadding(5);
   }
 
-  private Button getDeleteButton(int row, Collection<Appointment> appts) {
-    final int i = row;
-    final Collection<Appointment> apptsList = appts;
-    deleteButton = new Button("x");
+  private Button getDeleteButton(String ownerName, int id) {
+    final String owner = ownerName;
+    final int uid = id;
+    Button deleteButton = new Button("x");
     deleteButton.addClickHandler(new ClickHandler() {
       @Override
       public void onClick(ClickEvent clickEvent) {
-        apptList.removeRow(i);
-        refreshTable(apptsList);
+        deleteAppointment(owner, uid);
       }
     });
     return deleteButton;
   }
 
-  private void refreshTable(Collection<Appointment> appts) {
+  private void refreshTable(AppointmentBook apptBook) {
     apptList.removeAllRows();
     int i = 0;
-    for(Appointment appt : appts) {
+    for(Appointment appt : apptBook.getAppointments()) {
       apptList.insertRow(i);
       apptList.insertCell(i, 0);
       apptList.insertCell(i, 1);
-      apptList.setWidget(i, 0, getDeleteButton(i, appts));
+      apptList.setWidget(i, 0, getDeleteButton(apptBook.getOwnerName(), appt.getUid()));
       apptList.setHTML(i, 1, PrettyPrinter.dumpSingleAppt(appt));
       i++;
     }
+  }
+
+  private void changeActiveApptBook(String owner) {
+    AppointmentBookServiceAsync async = GWT.create(AppointmentBookService.class);
+    async.getAppointmentBook(owner, new AsyncCallback<AppointmentBook>() {
+      @Override
+      public void onSuccess(AppointmentBook apptBook) {
+                currentBook = apptBook;
+                refreshTable(apptBook);
+              }
+
+      @Override
+      public void onFailure(Throwable ex) {
+                alert(ex);
+              }
+    });
+  }
+
+  private void createBook() {
+    AppointmentBookServiceAsync async = GWT.create(AppointmentBookService.class);
+    async.createAppointmentBook(ownerField.getText(), new AsyncCallback<AppointmentBook>() {
+      @Override
+      public void onSuccess(AppointmentBook apptBook) {
+        currentBook = apptBook;
+        bookSelector.addItem(apptBook.getOwnerName());
+        refreshTable(apptBook);
+      }
+      @Override
+      public void onFailure(Throwable throwable) {
+        alert(throwable);
+      }
+
+    });
   }
 
   private void createAppointment() {
@@ -106,12 +179,12 @@ public class AppointmentBookGwt implements EntryPoint {
       alert(e);
       return;
     }
-    async.addAppointment(ownerField.getText(), descriptionField.getText(), beginTime, endTime,
+    async.addAppointment(currentBook.getOwnerName(), descriptionField.getText(), beginTime, endTime,
             new AsyncCallback<AppointmentBook>() {
 
       @Override
       public void onSuccess(AppointmentBook apptBook) {
-        refreshTable(apptBook.getAppointments());
+        refreshTable(apptBook);
       }
 
       @Override
@@ -119,6 +192,49 @@ public class AppointmentBookGwt implements EntryPoint {
         alert(ex);
       }
     });
+  }
+
+  private void deleteAppointment(String owner, int uid){
+    AppointmentBookServiceAsync async = GWT.create(AppointmentBookService.class);
+    async.deleteAppointment(owner, uid, new AsyncCallback<AppointmentBook>(){
+
+      @Override
+      public void onSuccess(AppointmentBook appointmentBook) {
+        refreshTable(appointmentBook);
+      }
+
+      @Override
+      public void onFailure(Throwable throwable) {
+
+      }
+    });
+  }
+
+  private void searchForAppointments() {
+
+    AppointmentBookServiceAsync async = GWT.create(AppointmentBookService.class);
+    Date beginTime = null;
+    Date endTime = null;
+    try {
+      beginTime = ApptBookUtilities.parseDateTime(searchBeginField.getText());
+      endTime = ApptBookUtilities.parseDateTime(searchEndField.getText());
+    } catch (IllegalArgumentException e) {
+      alert(e);
+      return;
+    }
+    async.searchForAppointments("Owner", beginTime, endTime,
+            new AsyncCallback<AppointmentBook>() {
+
+              @Override
+              public void onSuccess(AppointmentBook apptBook) {
+                refreshTable(apptBook);
+              }
+
+              @Override
+              public void onFailure(Throwable ex) {
+                alert(ex);
+              }
+            });
   }
 
   private void displayInAlertDialog(AppointmentBook airline) {
@@ -140,21 +256,37 @@ public class AppointmentBookGwt implements EntryPoint {
   @Override
   public void onModuleLoad() {
     RootPanel rootPanel = RootPanel.get();
-    rootPanel.add(addButton);
 
     FlexTable addApptForm = new FlexTable();
-    addApptForm.setWidget(0,0,new Label("Number of appointments"));
-    addApptForm.setWidget(1,0,ownerField);
+    addApptForm.setWidget(0,0,new Label("Add an appointment:"));
     addApptForm.setWidget(2,0,descriptionField);
     addApptForm.setWidget(3,0,beginDateField);
     addApptForm.setWidget(4,0,endDateField);
+    addApptForm.setWidget(5,0,addButton);
+    addApptForm.setWidth("400px");
 
-    DockPanel dockPanel = new DockPanel();
-    dockPanel.add(addApptForm, DockPanel.WEST);
-    dockPanel.add(apptList, DockPanel.EAST);
+    FlexTable searchForm = new FlexTable();
+    searchForm.setWidget(0,0,new Label("Search for appointments between two dates:"));
+    searchForm.setWidget(1,0,searchBeginField);
+    searchForm.setWidget(2,0,searchEndField);
+    searchForm.setWidget(3,0,searchButton);
 
-    rootPanel.add(addApptForm);
-    rootPanel.add(dockPanel);
+    FlexTable leftSide = new FlexTable();
+    leftSide.setWidget(0,0,addApptForm);
+    leftSide.setWidget(1,0,searchForm);
+
+    FlexTable rightSide = new FlexTable();
+    rightSide.setWidget(0,0,listLabel);
+    rightSide.setWidget(0,1,bookSelector);
+    rightSide.setWidget(1,0,newBookButton);
+    rightSide.setWidget(1,1,ownerField);
+    rightSide.setWidget(2,0,apptList);
+
+    masterPanel = new DockPanel();
+    masterPanel.add(leftSide, DockPanel.WEST);
+    masterPanel.add(rightSide, DockPanel.EAST);
+
+    rootPanel.add(masterPanel);
   }
 
   @VisibleForTesting

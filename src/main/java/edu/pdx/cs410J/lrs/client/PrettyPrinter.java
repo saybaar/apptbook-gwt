@@ -29,11 +29,10 @@ public class PrettyPrinter {
 
     public static String dumpSingleAppt(Appointment appt) {
         StringBuilder sb = new StringBuilder();
-        sb.append("\t - ");
         sb.append(appt.getDescription() + "<br>\t\t");
-        sb.append(ApptBookUtilities.prettyDateTime(appt.getBeginTime()) + " to ");
-        sb.append(ApptBookUtilities.prettyDateTime(appt.getEndTime()) + "<br>");
-        sb.append("\t\t(" + appt.getDurationInMinutes() + " minutes)");
+        sb.append("    " + ApptBookUtilities.prettyDateTime(appt.getBeginTime()) + " to ");
+        sb.append("    " + ApptBookUtilities.prettyDateTime(appt.getEndTime()) + "<br>");
+        sb.append("  (" + appt.getDurationInMinutes() + " minutes)");
         return sb.toString();
     }
 

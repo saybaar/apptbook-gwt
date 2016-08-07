@@ -18,4 +18,8 @@ public interface AppointmentBookServiceAsync {
 
   void addAppointment(String owner, String description, Date beginTime, Date endTime,
                       AsyncCallback<AppointmentBook> async);
+
+  void searchForAppointments(String ownerName, Date beginTime, Date endTime, AsyncCallback<AppointmentBook> asyncCallback);
+
+  void deleteAppointment(String ownerName, int uid, AsyncCallback<AppointmentBook> asyncCallback);
 }
