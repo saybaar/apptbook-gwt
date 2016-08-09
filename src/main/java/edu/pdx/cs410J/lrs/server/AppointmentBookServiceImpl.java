@@ -5,9 +5,7 @@ import edu.pdx.cs410J.lrs.client.Appointment;
 import edu.pdx.cs410J.lrs.client.AppointmentBook;
 import edu.pdx.cs410J.lrs.client.AppointmentBookService;
 
-import java.util.Date;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
 /**
  * The server-side implementation of the division service
@@ -15,7 +13,7 @@ import java.util.Map;
 public class AppointmentBookServiceImpl extends RemoteServiceServlet implements AppointmentBookService
 {
 
-  Map<String, AppointmentBook> appointmentBookLibrary = new HashMap<>();
+  Map<String, AppointmentBook> appointmentBookLibrary = new HashMap();
 
   @Override
   public AppointmentBook createAppointmentBook(String owner) {
@@ -61,6 +59,15 @@ public class AppointmentBookServiceImpl extends RemoteServiceServlet implements 
       }
     }
     return apptBook;
+  }
+
+  //Won't return keySet() as is because it's synchronized with the map.
+  public Set<String> getAllOwners() {
+    Set<String> results = new HashSet<>();
+    for(String s : appointmentBookLibrary.keySet()) {
+      results.add(s);
+    }
+    return results;
   }
 
   @Override

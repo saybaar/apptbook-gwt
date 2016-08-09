@@ -3,7 +3,10 @@ package edu.pdx.cs410J.lrs.client;
 import com.google.gwt.user.client.rpc.RemoteService;
 import com.google.gwt.user.client.rpc.RemoteServiceRelativePath;
 
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
+import java.util.Set;
 
 /**
  * A GWT remote service that returns a dummy appointment book
@@ -24,5 +27,7 @@ public interface AppointmentBookService extends RemoteService {
   public AppointmentBook searchForAppointments(String owner, Date beginTime, Date endTime);
 
   public AppointmentBook deleteAppointment(String owner, int uid);
+
+  public Set<String> getAllOwners();
 
 }

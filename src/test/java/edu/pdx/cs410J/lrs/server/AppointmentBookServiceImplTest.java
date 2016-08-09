@@ -9,6 +9,7 @@ import org.junit.Test;
 
 import java.text.ParseException;
 import java.util.Date;
+import java.util.Set;
 
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.notNullValue;
@@ -56,6 +57,25 @@ public class AppointmentBookServiceImplTest {
     service.addAppointment("testOwner1", "testDescription2", date2, date3);
     AppointmentBook results = service.searchForAppointments("testOwner1", date1, date2);
     assertThat(results.getAppointments().size(), equalTo(1));
+  }
+
+  @Ignore
+  @Test
+  public void getOwnersTest() {
+    AppointmentBookServiceImpl service = new AppointmentBookServiceImpl();
+    Set<String> s = service.getAllOwners();
+    assertThat(s.size(), equalTo(1));
+  }
+
+  @Test
+  public void testSearchResultsInLibrary() {
+    AppointmentBookServiceImpl service = new AppointmentBookServiceImpl();
+    Date date1 = new Date();
+    Date date2 = new Date();
+    service.createAppointmentBook("Owner1");
+    service.addAppointment("Owner1", "desc", date1, date2);
+    service.searchForAppointments("Owner1", date1, date2);
+    assertThat(service.getAllOwners().size(), equalTo(1));
   }
 
 }

@@ -3,6 +3,7 @@ package edu.pdx.cs410J.lrs.client;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 
 import java.util.Date;
+import java.util.Set;
 
 /**
  * The client-side interface to the ping service
@@ -22,4 +23,6 @@ public interface AppointmentBookServiceAsync {
   void searchForAppointments(String ownerName, Date beginTime, Date endTime, AsyncCallback<AppointmentBook> asyncCallback);
 
   void deleteAppointment(String ownerName, int uid, AsyncCallback<AppointmentBook> asyncCallback);
+
+  void getAllOwners(AsyncCallback<Set<String>> asyncCallback);
 }

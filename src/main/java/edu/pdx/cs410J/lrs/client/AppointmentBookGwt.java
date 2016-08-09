@@ -13,6 +13,7 @@ import com.google.gwt.user.client.ui.*;
 
 import java.util.Collection;
 import java.util.Date;
+import java.util.Set;
 
 /**
  * A basic GWT class that makes sure that we can send an appointment book back from the server
@@ -92,7 +93,9 @@ public class AppointmentBookGwt implements EntryPoint {
     bookSelector.addChangeHandler(new ChangeHandler() {
       @Override
       public void onChange(ChangeEvent changeEvent) {
-        changeActiveApptBook(bookSelector.getSelectedItemText());
+        if(bookSelector.getSelectedIndex() != 0) {
+          changeActiveApptBook(bookSelector.getSelectedItemText());
+        }
       }
     });
 
@@ -107,6 +110,8 @@ public class AppointmentBookGwt implements EntryPoint {
     this.apptList = new FlexTable();
     apptList.setBorderWidth(1);
     apptList.setCellPadding(5);
+
+    updateUI();
   }
 
   private Button getDeleteButton(String ownerName, int id) {
@@ -135,107 +140,48 @@ public class AppointmentBookGwt implements EntryPoint {
     }
   }
 
-  private void changeActiveApptBook(String owner) {
-    AppointmentBookServiceAsync async = GWT.create(AppointmentBookService.class);
-    async.getAppointmentBook(owner, new AsyncCallback<AppointmentBook>() {
-      @Override
-      public void onSuccess(AppointmentBook apptBook) {
-                currentBook = apptBook;
-                refreshTable(apptBook);
-              }
+  private void updateUI() {
+    if(currentBook == null || currentBook.getAppointments().isEmpty()) {
+      apptList.setVisible(false);
+    } else {
+      apptList.setVisible(true);
+      refreshTable(currentBook);
+    }
 
-      @Override
-      public void onFailure(Throwable ex) {
-                alert(ex);
-              }
-    });
+    if(currentBook == null) {
+      addButton.setEnabled(false);
+      searchButton.setEnabled(false);
+      listLabel.setText("Select or create an appointment book to view");
+    } else {
+      addButton.setEnabled(true);
+      searchButton.setEnabled(true);
+      listLabel.setText(currentBook.getOwnerName());
+    }
+
+    populateBookMenu();
+
   }
 
-  private void createBook() {
+  private void populateBookMenu() {
     AppointmentBookServiceAsync async = GWT.create(AppointmentBookService.class);
-    async.createAppointmentBook(ownerField.getText(), new AsyncCallback<AppointmentBook>() {
-      @Override
-      public void onSuccess(AppointmentBook apptBook) {
-        currentBook = apptBook;
-        bookSelector.addItem(apptBook.getOwnerName());
-        refreshTable(apptBook);
-      }
+    async.getAllOwners(new AsyncCallback<Set<String>>() {
       @Override
       public void onFailure(Throwable throwable) {
         alert(throwable);
       }
 
-    });
-  }
-
-  private void createAppointment() {
-    AppointmentBookServiceAsync async = GWT.create(AppointmentBookService.class);
-    Date beginTime = null;
-    Date endTime = null;
-    try {
-      beginTime = ApptBookUtilities.parseDateTime(beginDateField.getText());
-      endTime = ApptBookUtilities.parseDateTime(endDateField.getText());
-    } catch (IllegalArgumentException e) {
-      alert(e);
-      return;
-    }
-    async.addAppointment(currentBook.getOwnerName(), descriptionField.getText(), beginTime, endTime,
-            new AsyncCallback<AppointmentBook>() {
-
       @Override
-      public void onSuccess(AppointmentBook apptBook) {
-        refreshTable(apptBook);
-      }
-
-      @Override
-      public void onFailure(Throwable ex) {
-        alert(ex);
+      public void onSuccess(Set<String> strings) {
+        bookSelector.clear();
+        bookSelector.insertItem("", 0);
+        for(String string : strings) {
+          bookSelector.addItem(string);
+        }
+        bookSelector.setSelectedIndex(0);
       }
     });
   }
 
-  private void deleteAppointment(String owner, int uid){
-    AppointmentBookServiceAsync async = GWT.create(AppointmentBookService.class);
-    async.deleteAppointment(owner, uid, new AsyncCallback<AppointmentBook>(){
-
-      @Override
-      public void onSuccess(AppointmentBook appointmentBook) {
-        refreshTable(appointmentBook);
-      }
-
-      @Override
-      public void onFailure(Throwable throwable) {
-
-      }
-    });
-  }
-
-  private void searchForAppointments() {
-
-    AppointmentBookServiceAsync async = GWT.create(AppointmentBookService.class);
-    Date beginTime = null;
-    Date endTime = null;
-    try {
-      beginTime = ApptBookUtilities.parseDateTime(searchBeginField.getText());
-      endTime = ApptBookUtilities.parseDateTime(searchEndField.getText());
-    } catch (IllegalArgumentException e) {
-      alert(e);
-      return;
-    }
-    async.searchForAppointments("Owner", beginTime, endTime,
-            new AsyncCallback<AppointmentBook>() {
-
-              @Override
-              public void onSuccess(AppointmentBook apptBook) {
-                refreshTable(apptBook);
-              }
-
-              @Override
-              public void onFailure(Throwable ex) {
-                alert(ex);
-              }
-            });
-  }
 
   private void displayInAlertDialog(AppointmentBook airline) {
     StringBuilder sb = new StringBuilder(airline.toString());
@@ -292,6 +238,112 @@ public class AppointmentBookGwt implements EntryPoint {
   @VisibleForTesting
   interface Alerter {
     void alert(String message);
+  }
+
+
+  private void createBook() {
+    AppointmentBookServiceAsync async = GWT.create(AppointmentBookService.class);
+    async.createAppointmentBook(ownerField.getText(), new AsyncCallback<AppointmentBook>() {
+      @Override
+      public void onSuccess(AppointmentBook apptBook) {
+        currentBook = apptBook;
+        bookSelector.addItem(apptBook.getOwnerName());
+        updateUI();
+      }
+      @Override
+      public void onFailure(Throwable throwable) {
+        alert(throwable);
+      }
+
+    });
+  }
+
+  private void createAppointment() {
+    AppointmentBookServiceAsync async = GWT.create(AppointmentBookService.class);
+    Date beginTime = null;
+    Date endTime = null;
+    try {
+      beginTime = ApptBookUtilities.parseDateTime(beginDateField.getText());
+      endTime = ApptBookUtilities.parseDateTime(endDateField.getText());
+    } catch (IllegalArgumentException e) {
+      alert(e);
+      return;
+    }
+    async.addAppointment(currentBook.getOwnerName(), descriptionField.getText(), beginTime, endTime,
+            new AsyncCallback<AppointmentBook>() {
+
+              @Override
+              public void onSuccess(AppointmentBook apptBook) {
+                currentBook = apptBook;
+                updateUI();
+              }
+
+              @Override
+              public void onFailure(Throwable ex) {
+                alert(ex);
+              }
+            });
+  }
+
+  private void deleteAppointment(String owner, int uid){
+    AppointmentBookServiceAsync async = GWT.create(AppointmentBookService.class);
+    async.deleteAppointment(owner, uid, new AsyncCallback<AppointmentBook>(){
+
+      @Override
+      public void onSuccess(AppointmentBook appointmentBook) {
+        currentBook = appointmentBook;
+        updateUI();
+      }
+
+      @Override
+      public void onFailure(Throwable throwable) {
+        alert(throwable);
+      }
+    });
+  }
+
+  private void searchForAppointments() {
+
+    AppointmentBookServiceAsync async = GWT.create(AppointmentBookService.class);
+    Date beginTime = null;
+    Date endTime = null;
+    try {
+      beginTime = ApptBookUtilities.parseDateTime(searchBeginField.getText());
+      endTime = ApptBookUtilities.parseDateTime(searchEndField.getText());
+    } catch (IllegalArgumentException e) {
+      alert(e);
+      return;
+    }
+    async.searchForAppointments(currentBook.getOwnerName(), beginTime, endTime,
+            new AsyncCallback<AppointmentBook>() {
+
+              @Override
+              public void onSuccess(AppointmentBook apptBook) {
+                currentBook = apptBook;
+                updateUI();
+              }
+
+              @Override
+              public void onFailure(Throwable ex) {
+                alert(ex);
+              }
+            });
+  }
+
+  private void changeActiveApptBook(String owner) {
+    AppointmentBookServiceAsync async = GWT.create(AppointmentBookService.class);
+    async.getAppointmentBook(owner, new AsyncCallback<AppointmentBook>() {
+      @Override
+      public void onSuccess(AppointmentBook apptBook) {
+        currentBook = apptBook;
+        updateUI();
+      }
+
+      @Override
+      public void onFailure(Throwable ex) {
+        alert(ex);
+      }
+    });
   }
 
 }
