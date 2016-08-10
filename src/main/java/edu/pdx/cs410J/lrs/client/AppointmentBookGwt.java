@@ -7,9 +7,11 @@ import com.google.gwt.event.dom.client.ChangeEvent;
 import com.google.gwt.event.dom.client.ChangeHandler;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
+import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.google.gwt.user.client.ui.*;
+import com.google.gwt.user.datepicker.client.DateBox;
 
 import java.util.*;
 
@@ -21,14 +23,25 @@ public class AppointmentBookGwt implements EntryPoint {
 
   private AppointmentBook currentBook = null;
 
-  @VisibleForTesting
+  final HTML readme = new HTML("Lydia Simmons - Advanced Java Project 5<br><br>" +
+          "This webapp supports multiple appointment books. Use the form at the bottom left<br>" +
+          "to create them. Use the \"select book\" dropdown menu to switch between books <br>" +
+          "and return from search results. <br><br>" +
+          "Use the forms on the left to create and search appointments in the currently <br>" +
+          "displayed appointment book. Appointments may be deleted with the \"x\" button.<br><br><br>" +
+          "Click anywhere to close this message.");
+
+  MenuBar mainMenu;
+  MenuBar helpMenu;
+  PopupPanel readmePanel;
+
   TextBox descriptionField;
   TextBox beginDateField;
   TextBox endDateField;
   Button addButton;
 
-  TextBox searchBeginField;
-  TextBox searchEndField;
+  TextBox searchBeginDateField;
+  TextBox searchEndDateField;
   Button searchButton;
 
   ListBox bookSelector;
@@ -58,14 +71,34 @@ public class AppointmentBookGwt implements EntryPoint {
 
   private void addWidgets() {
 
-    this.ownerField = new TextBox();
-    ownerField.setText("Owner");
+    this.mainMenu = new MenuBar();
+    this.helpMenu = new MenuBar(true);
+    Command showReadme = new Command() {
+      @Override
+      public void execute() {
+        readmePanel.show();
+      }
+    };
+    helpMenu.addItem(new MenuItem("Readme", showReadme));
+    mainMenu.addItem("Help", helpMenu);
+    readmePanel = new PopupPanel(true);
+    String windowWidth = Window.getClientWidth() + "px";
+    String windowHeight = Window.getClientHeight() + "px";
+    readmePanel.setSize(windowWidth, windowHeight);
+    readmePanel.setWidget(readme);
+    readme.addClickHandler(new ClickHandler() {
+      @Override
+      public void onClick(ClickEvent clickEvent) {
+        readmePanel.hide();
+      }
+    });
+
     this.descriptionField = new TextBox();
     descriptionField.setText("Description");
     this.beginDateField = new TextBox();
-    beginDateField.setText("11/11/1111 11:11 AM");
+    beginDateField.setText("08/10/2016 12:00 PM");
     this.endDateField = new TextBox();
-    endDateField.setText("11/11/1111 11:21 AM");
+    endDateField.setText("08/10/2016 01:00 PM");
     addButton = new Button("Add Appointment");
     addButton.addClickHandler(new ClickHandler() {
       @Override
@@ -74,8 +107,10 @@ public class AppointmentBookGwt implements EntryPoint {
       }
     });
 
-    this.searchBeginField = new TextBox();
-    this.searchEndField = new TextBox();
+    this.searchBeginDateField = new TextBox();
+    searchBeginDateField.setText("08/10/2016 12:00 PM");
+    this.searchEndDateField = new TextBox();
+    searchEndDateField.setText("08/10/2016 01:00 PM");
     searchButton = new Button("Search");
     searchButton.addClickHandler(new ClickHandler() {
       @Override
@@ -96,6 +131,8 @@ public class AppointmentBookGwt implements EntryPoint {
       }
     });
 
+    this.ownerField = new TextBox();
+    ownerField.setText("Owner");
     this.newBookButton = new Button("Create book");
     newBookButton.addClickHandler(new ClickHandler() {
       @Override
@@ -184,18 +221,6 @@ public class AppointmentBookGwt implements EntryPoint {
   }
 
 
-  private void displayInAlertDialog(AppointmentBook airline) {
-    StringBuilder sb = new StringBuilder(airline.toString());
-    sb.append("\n");
-
-    Collection<Appointment> flights = airline.getAppointments();
-    for (Appointment flight : flights) {
-      sb.append(flight);
-      sb.append("\n");
-    }
-    alerter.alert(sb.toString());
-  }
-
   private void alert(Throwable ex) {
     alerter.alert(ex.toString());
   }
@@ -205,18 +230,18 @@ public class AppointmentBookGwt implements EntryPoint {
     RootPanel rootPanel = RootPanel.get();
 
     FlexTable addApptForm = new FlexTable();
-    addApptForm.setWidget(0,0,new Label("Add an appointment:"));
-    addApptForm.setWidget(2,0,descriptionField);
+    addApptForm.setWidget(0,0,new Label("Add an appointment with a start and end date:"));
+    addApptForm.setWidget(1,0,descriptionField);
     addApptForm.setWidget(3,0,beginDateField);
-    addApptForm.setWidget(4,0,endDateField);
-    addApptForm.setWidget(5,0,addButton);
+    addApptForm.setWidget(5,0,endDateField);
+    addApptForm.setWidget(6,0,addButton);
     addApptForm.setWidth("400px");
 
     FlexTable searchForm = new FlexTable();
     searchForm.setWidget(0,0,new Label("Search for appointments between two dates:"));
-    searchForm.setWidget(1,0,searchBeginField);
-    searchForm.setWidget(2,0,searchEndField);
-    searchForm.setWidget(3,0,searchButton);
+    searchForm.setWidget(2,0,searchBeginDateField);
+    searchForm.setWidget(4,0,searchEndDateField);
+    searchForm.setWidget(5,0,searchButton);
 
     FlexTable newBookForm = new FlexTable();
     newBookForm.setWidget(0,0,new Label("Create a new appointment book:"));
@@ -244,6 +269,7 @@ public class AppointmentBookGwt implements EntryPoint {
     rightSide.setCellPadding(10);
 
     masterPanel = new DockPanel();
+    masterPanel.add(mainMenu, DockPanel.NORTH);
     masterPanel.add(leftSide, DockPanel.WEST);
     masterPanel.add(rightSide, DockPanel.EAST);
 
@@ -288,16 +314,22 @@ public class AppointmentBookGwt implements EntryPoint {
   }
 
   private void createAppointment() {
-    AppointmentBookServiceAsync async = GWT.create(AppointmentBookService.class);
     Date beginTime = null;
     Date endTime = null;
     try {
       beginTime = ApptBookUtilities.parseDateTime(beginDateField.getText());
-      endTime = ApptBookUtilities.parseDateTime(endDateField.getText());
     } catch (IllegalArgumentException e) {
-      alert(e);
+      alerter.alert("Malformatted date/time: " + beginDateField.getText() +
+            "\nExpected - mm/dd/yyyy hh:mm xm");
       return;
     }
+    try {
+      endTime = ApptBookUtilities.parseDateTime(endDateField.getText());
+    } catch (IllegalArgumentException e) {alerter.alert("Malformatted date/time: " + endDateField.getText() +
+            "\nExpected - mm/dd/yyyy hh:mm xm");
+      return;
+    }
+    AppointmentBookServiceAsync async = GWT.create(AppointmentBookService.class);
     async.addAppointment(currentBook.getOwnerName(), descriptionField.getText(), beginTime, endTime,
             new AsyncCallback<AppointmentBook>() {
 
@@ -337,10 +369,16 @@ public class AppointmentBookGwt implements EntryPoint {
     Date beginTime = null;
     Date endTime = null;
     try {
-      beginTime = ApptBookUtilities.parseDateTime(searchBeginField.getText());
-      endTime = ApptBookUtilities.parseDateTime(searchEndField.getText());
+      beginTime = ApptBookUtilities.parseDateTime(searchBeginDateField.getText());
     } catch (IllegalArgumentException e) {
-      alert(e);
+      alerter.alert("Malformatted date/time: " + searchBeginDateField.getText() +
+              "\nExpected - mm/dd/yyyy hh:mm xm");
+      return;
+    }
+    try {
+      endTime = ApptBookUtilities.parseDateTime(searchEndDateField.getText());
+    } catch (IllegalArgumentException e) {alerter.alert("Malformatted date/time: " + searchEndDateField.getText() +
+            "\nExpected - mm/dd/yyyy hh:mm xm");
       return;
     }
     final Date begin = beginTime;
