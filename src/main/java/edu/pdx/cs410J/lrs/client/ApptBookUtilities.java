@@ -10,13 +10,11 @@ import java.util.Date;
  */
 public class ApptBookUtilities {
 
-    //static final DateTimeFormat dateStorageFormat = DateTimeFormat.getFormat("MM/dd/yyyy hh:mm aa");
-
     /**
      * Date/time parser used for both command line arguments and date/time strings read from file.
      * Parses a date from the machine-readable storage format.
      * @param dateTimeString A string date/time to check, expected format "MM/dd/yyyy HH:mm"
-     * @return true if string is a valid date/time in "MM/dd/yyyy HH:mm" format, false otherwise
+     * @return true if string is a valid date/time in "MM/dd/yyyy HH:mm aa" format, false otherwise
      * @throws IllegalArgumentException if date cannot be parsed
      */
     public static Date parseDateTime(String dateTimeString) throws IllegalArgumentException {

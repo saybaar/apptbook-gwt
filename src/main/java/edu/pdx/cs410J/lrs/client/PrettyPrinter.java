@@ -13,7 +13,7 @@ import java.io.PrintWriter;
 public class PrettyPrinter {
 
     /**
-     * Dumps an AppointmentBook to a pretty-printed String, ready to be output to a file or stdout.
+     * Dumps an AppointmentBook to a pretty-printed HTML-ready String.
      * @param apptBook The appointment book to pretty-print.
      * @return The pretty-printed output as a String.
      */
@@ -21,12 +21,17 @@ public class PrettyPrinter {
         StringBuilder sb = new StringBuilder();
         sb.append("Appointment book for " + apptBook.getOwnerName() + ":");
         for(Appointment appt : ((AppointmentBook) apptBook).getAppointments()) {
-            sb.append("\n");
+            sb.append("<br><br>");
             sb.append(dumpSingleAppt(appt));
         }
         return sb.toString();
     }
 
+    /**
+     * Dumps a single appointment in pretty format to an HTML-ready String.
+     * @param appt Appointment to format
+     * @return Pretty formatted appointment
+     */
     public static String dumpSingleAppt(Appointment appt) {
         StringBuilder sb = new StringBuilder();
         sb.append(appt.getDescription() + "<br>\t\t");
