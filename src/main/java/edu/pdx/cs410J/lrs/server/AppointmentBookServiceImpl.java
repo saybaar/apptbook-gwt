@@ -40,8 +40,7 @@ public class AppointmentBookServiceImpl extends RemoteServiceServlet implements 
   @Override
   public AppointmentBook searchForAppointments(String owner, Date beginTime, Date endTime) {
     AppointmentBook searchInBook = appointmentBookLibrary.get(owner);
-    AppointmentBook results = new AppointmentBook("Appointments for " + owner + " between " +
-      beginTime + " and " + endTime);
+    AppointmentBook results = new AppointmentBook(owner);
     for(Appointment appt : searchInBook.getAppointments()) {
       if(appt.getBeginTime().compareTo(beginTime) >= 0 &&
               appt.getEndTime().compareTo(endTime) <= 0) {
@@ -51,13 +50,15 @@ public class AppointmentBookServiceImpl extends RemoteServiceServlet implements 
     return results;
   }
 
-  public AppointmentBook deleteAppointment(String owner, int uid){
+  public AppointmentBook deleteAppointment(String owner, Appointment appt){
     AppointmentBook apptBook = appointmentBookLibrary.get(owner);
+    /*
     for(Appointment appt : apptBook.getAppointments()) {
       if(appt.getUid() == uid) {
         apptBook.getAppointments().remove(appt);
       }
-    }
+    }*/
+    apptBook.getAppointments().remove(appt);
     return apptBook;
   }
 

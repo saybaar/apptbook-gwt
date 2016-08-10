@@ -11,9 +11,7 @@ import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.google.gwt.user.client.ui.*;
 
-import java.util.Collection;
-import java.util.Date;
-import java.util.Set;
+import java.util.*;
 
 /**
  * A basic GWT class that makes sure that we can send an appointment book back from the server
@@ -87,7 +85,6 @@ public class AppointmentBookGwt implements EntryPoint {
     });
 
     this.listLabel = new Label();
-    listLabel.setText("Select or create an appointment book to view");
 
     this.bookSelector = new ListBox();
     bookSelector.addChangeHandler(new ChangeHandler() {
@@ -99,7 +96,7 @@ public class AppointmentBookGwt implements EntryPoint {
       }
     });
 
-    this.newBookButton = new Button("New book");
+    this.newBookButton = new Button("Create book");
     newBookButton.addClickHandler(new ClickHandler() {
       @Override
       public void onClick(ClickEvent clickEvent) {
@@ -114,14 +111,15 @@ public class AppointmentBookGwt implements EntryPoint {
     updateUI();
   }
 
-  private Button getDeleteButton(String ownerName, int id) {
+  private Button getDeleteButton(String ownerName, Appointment appointment) {
     final String owner = ownerName;
-    final int uid = id;
+    final Appointment appt = appointment;
     Button deleteButton = new Button("x");
     deleteButton.addClickHandler(new ClickHandler() {
       @Override
       public void onClick(ClickEvent clickEvent) {
-        deleteAppointment(owner, uid);
+        deleteAppointment(owner, appt);
+        updateUI();
       }
     });
     return deleteButton;
@@ -134,15 +132,19 @@ public class AppointmentBookGwt implements EntryPoint {
       apptList.insertRow(i);
       apptList.insertCell(i, 0);
       apptList.insertCell(i, 1);
-      apptList.setWidget(i, 0, getDeleteButton(apptBook.getOwnerName(), appt.getUid()));
+      apptList.setWidget(i, 0, getDeleteButton(apptBook.getOwnerName(), appt));
       apptList.setHTML(i, 1, PrettyPrinter.dumpSingleAppt(appt));
       i++;
     }
   }
 
   private void updateUI() {
-    if(currentBook == null || currentBook.getAppointments().isEmpty()) {
+    if(currentBook == null) {
       apptList.setVisible(false);
+    } else if(currentBook.getAppointments().isEmpty()) {
+      apptList.setVisible(true);
+      apptList.removeAllRows();
+      apptList.setHTML(0,0,"No appointments here!");
     } else {
       apptList.setVisible(true);
       refreshTable(currentBook);
@@ -151,15 +153,14 @@ public class AppointmentBookGwt implements EntryPoint {
     if(currentBook == null) {
       addButton.setEnabled(false);
       searchButton.setEnabled(false);
-      listLabel.setText("Select or create an appointment book to view");
+      listLabel.setText("Select or create an appointment book to begin");
     } else {
       addButton.setEnabled(true);
       searchButton.setEnabled(true);
-      listLabel.setText(currentBook.getOwnerName());
+      listLabel.setText("Appointments for " + currentBook.getOwnerName());
     }
 
     populateBookMenu();
-
   }
 
   private void populateBookMenu() {
@@ -217,16 +218,30 @@ public class AppointmentBookGwt implements EntryPoint {
     searchForm.setWidget(2,0,searchEndField);
     searchForm.setWidget(3,0,searchButton);
 
+    FlexTable newBookForm = new FlexTable();
+    newBookForm.setWidget(0,0,new Label("Create a new appointment book:"));
+    newBookForm.setWidget(1,0,ownerField);
+    newBookForm.setWidget(2,0,newBookButton);
+
     FlexTable leftSide = new FlexTable();
     leftSide.setWidget(0,0,addApptForm);
     leftSide.setWidget(1,0,searchForm);
+    leftSide.setWidget(2,0,newBookForm);
+    leftSide.setCellPadding(10);
+
+    FlexTable tableHeader = new FlexTable();
+    tableHeader.setWidget(0,0,new Label("Select book: "));
+    tableHeader.setWidget(0,1,bookSelector);
 
     FlexTable rightSide = new FlexTable();
-    rightSide.setWidget(0,0,listLabel);
-    rightSide.setWidget(0,1,bookSelector);
-    rightSide.setWidget(1,0,newBookButton);
-    rightSide.setWidget(1,1,ownerField);
+    FlexTable label = new FlexTable();
+    label.setWidget(0,0,listLabel);
+    label.setBorderWidth(1);
+    label.setCellPadding(10);
+    rightSide.setWidget(0,0,tableHeader);
+    rightSide.setWidget(1,0,label);
     rightSide.setWidget(2,0,apptList);
+    rightSide.setCellPadding(10);
 
     masterPanel = new DockPanel();
     masterPanel.add(leftSide, DockPanel.WEST);
@@ -240,10 +255,24 @@ public class AppointmentBookGwt implements EntryPoint {
     void alert(String message);
   }
 
+  private List<String> getDropDownContents() {
+    List<String> results = new ArrayList<>();
+    for(int i = 0; i < bookSelector.getItemCount(); i++) {
+      results.add(bookSelector.getItemText(i));
+    }
+    return results;
+  }
 
   private void createBook() {
+    String owner = ownerField.getText();
+    if(getDropDownContents().contains(owner)){
+      alerter.alert("An appointment book for " + owner + " already exists!");
+      return;
+    }
+
     AppointmentBookServiceAsync async = GWT.create(AppointmentBookService.class);
-    async.createAppointmentBook(ownerField.getText(), new AsyncCallback<AppointmentBook>() {
+
+    async.createAppointmentBook(owner, new AsyncCallback<AppointmentBook>() {
       @Override
       public void onSuccess(AppointmentBook apptBook) {
         currentBook = apptBook;
@@ -285,9 +314,9 @@ public class AppointmentBookGwt implements EntryPoint {
             });
   }
 
-  private void deleteAppointment(String owner, int uid){
+  private void deleteAppointment(String owner, Appointment appt){
     AppointmentBookServiceAsync async = GWT.create(AppointmentBookService.class);
-    async.deleteAppointment(owner, uid, new AsyncCallback<AppointmentBook>(){
+    async.deleteAppointment(owner, appt, new AsyncCallback<AppointmentBook>(){
 
       @Override
       public void onSuccess(AppointmentBook appointmentBook) {
@@ -314,6 +343,8 @@ public class AppointmentBookGwt implements EntryPoint {
       alert(e);
       return;
     }
+    final Date begin = beginTime;
+    final Date end = endTime;
     async.searchForAppointments(currentBook.getOwnerName(), beginTime, endTime,
             new AsyncCallback<AppointmentBook>() {
 
@@ -321,6 +352,9 @@ public class AppointmentBookGwt implements EntryPoint {
               public void onSuccess(AppointmentBook apptBook) {
                 currentBook = apptBook;
                 updateUI();
+                listLabel.setText("Appointments for " + currentBook.getOwnerName() + " between " +
+                        ApptBookUtilities.prettyDateTime(begin) + " and " +
+                        ApptBookUtilities.prettyDateTime(end));
               }
 
               @Override

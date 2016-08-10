@@ -12,7 +12,6 @@ public class Appointment extends AbstractAppointment implements Comparable<Appoi
   private String description;
   private Date startDateTime;
   private Date endDateTime;
-  private Integer uid;
 
   /**
    * Creates a new Appointment with the given string parameters.
@@ -24,13 +23,11 @@ public class Appointment extends AbstractAppointment implements Comparable<Appoi
     this.description = description;
     this.startDateTime = startDateTime;
     this.endDateTime = endDateTime;
-    this.uid = (description + startDateTime + endDateTime).hashCode();
   }
   public Appointment() {
     this.description = "test description";
     this.startDateTime = new Date();
     this.endDateTime = new Date();
-    this.uid = 0;
   }
 
   /**
@@ -76,10 +73,6 @@ public class Appointment extends AbstractAppointment implements Comparable<Appoi
   @Override
   public String getDescription() {
     return description;
-  }
-
-  public int getUid() {
-    return uid;
   }
 
   /**

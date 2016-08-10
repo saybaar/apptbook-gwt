@@ -22,7 +22,7 @@ public interface AppointmentBookServiceAsync {
 
   void searchForAppointments(String ownerName, Date beginTime, Date endTime, AsyncCallback<AppointmentBook> asyncCallback);
 
-  void deleteAppointment(String ownerName, int uid, AsyncCallback<AppointmentBook> asyncCallback);
+  void deleteAppointment(String ownerName, Appointment appt, AsyncCallback<AppointmentBook> asyncCallback);
 
   void getAllOwners(AsyncCallback<Set<String>> asyncCallback);
 }

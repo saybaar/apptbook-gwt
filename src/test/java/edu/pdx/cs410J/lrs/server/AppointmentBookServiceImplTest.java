@@ -59,11 +59,13 @@ public class AppointmentBookServiceImplTest {
     assertThat(results.getAppointments().size(), equalTo(1));
   }
 
-  @Ignore
   @Test
   public void getOwnersTest() {
     AppointmentBookServiceImpl service = new AppointmentBookServiceImpl();
     Set<String> s = service.getAllOwners();
+    assertThat(s.size(), equalTo(0));
+    service.createAppointmentBook("new1");
+    s = service.getAllOwners();
     assertThat(s.size(), equalTo(1));
   }
 
